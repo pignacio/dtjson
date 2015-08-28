@@ -29,19 +29,22 @@ def _date_from_json(json_obj):
 
 
 def _datetime_to_json(dtime):
+    def _dt_values(dt):
+        return [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
+                dt.microsecond]
     if dtime.tzinfo:
         timezone = dtime.tzinfo.zone
         as_utc = pytz.utc.normalize(dtime)
-        timestamp = float(as_utc.strftime("%s.%f"))
+        utc_values = _dt_values(as_utc)
     else:
         timezone = None
-        timestamp = float(dtime.strftime("%s.%f"))
-    return {'timezone': timezone, 'timestamp': timestamp, }
+        utc_values = _dt_values(dtime)
+    return {'timezone': timezone, 'utc_values': utc_values, }
 
 
 def _datetime_from_json(json_obj):
     timezone = json_obj['timezone']
-    naive = datetime.datetime.fromtimestamp(json_obj['timestamp'])
+    naive = datetime.datetime(*json_obj['utc_values'])
     if timezone is None:
         return naive
     else:
