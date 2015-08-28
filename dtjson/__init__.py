@@ -29,11 +29,15 @@ def _date_from_json(json_obj):
 
 
 def _datetime_to_json(dtime):
-    def _dt_values(dt):
-        return [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second,
-                dt.microsecond]
+    def _dt_values(date):
+        return [date.year, date.month, date.day, date.hour, date.minute,
+                date.second, date.microsecond]
+
     if dtime.tzinfo:
-        timezone = dtime.tzinfo.zone
+        if dtime.tzinfo.__class__.__name__ == 'FixedOffsetTimezone':
+            timezone = pytz.utc.zone
+        else:
+            timezone = dtime.tzinfo.zone
         as_utc = pytz.utc.normalize(dtime)
         utc_values = _dt_values(as_utc)
     else:
