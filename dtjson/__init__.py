@@ -72,8 +72,12 @@ def dtjson_default(obj):
 
 def dtjson_object_hook(obj):
     if DT_NAME in obj and DT_DATA in obj:
-        serializer = _SERIALIZER_FROM_NAME[obj[DT_NAME]]
-        return serializer.from_json(obj[DT_DATA])
+        try:
+            serializer = _SERIALIZER_FROM_NAME[obj[DT_NAME]]
+            return serializer.from_json(obj[DT_DATA])
+        except Exception:  # pylint: disable=broad-except
+            # Fall through
+            pass
     return obj
 
 
