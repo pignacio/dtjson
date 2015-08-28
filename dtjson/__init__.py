@@ -88,9 +88,9 @@ def dtjson_object_hook(obj):
     return obj
 
 
-def dtjson_encode(obj):
-    return json.dumps(obj, default=dtjson_default)
+def dtjson_encode(obj, **kwargs):
+    return json.dumps(obj, default=dtjson_default, **kwargs)
 
 
-def dtjson_decode(obj):
-    return json.loads(obj, object_hook=dtjson_object_hook)
+def dtjson_decode(obj, **kwargs):
+    return json.loads(obj, object_hook=dtjson_object_hook, **kwargs)
