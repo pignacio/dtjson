@@ -9,7 +9,7 @@ import pytz
 
 __author__ = 'Ignacio Rossi'
 __email__ = 'rossi.ignacio@gmail.com '
-__version__ = '0.0.1'
+__version__ = '0.0.1-dev'
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 

@@ -17,7 +17,7 @@ requirements = [
 
 setup(
     name='dtjson',
-    version='0.0.1',
+    version='0.0.1-dev',
     description="JSON Serialization for dates and datetimes",
     long_description=readme + '\n\n' + history,
     author="Ignacio Rossi",
