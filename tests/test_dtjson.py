@@ -135,6 +135,16 @@ class InvalidTimezonesTest(JsonTestMixin, unittest.TestCase):
         self.assertEqual(pytz.utc, decoded.tzinfo)
 
     def test_missing_zone_name(self):
+        class BrokenTZ(datetime.tzinfo):
+            def utcoffset(self, _dtime):
+                return datetime.timedelta(minutes=123)
+
+        with warnings.catch_warnings(record=True) as warns:
+            self._test_is_moved_to_utc(self.datetime.replace(tzinfo=BrokenTZ()))
+
+        self.assertIn("has no timezone name", str(warns[0].message))
+
+    def test_none_zone_name(self):
         self.datetime.tzinfo.zone = None
         with warnings.catch_warnings(record=True) as warns:
             self._test_is_moved_to_utc(self.datetime)

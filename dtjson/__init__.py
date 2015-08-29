@@ -41,7 +41,10 @@ def _datetime_to_json(dtime):
 
     if dtime.utcoffset() is not None:
         # Aware
-        timezone = dtime.tzinfo.zone
+        try:
+            timezone = dtime.tzinfo.zone
+        except AttributeError:
+            timezone = None
         if timezone is None:
             _warn_missing_tz(dtime.tzinfo, "has no timezone name")
             timezone = pytz.utc.zone
