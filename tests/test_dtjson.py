@@ -96,6 +96,11 @@ class JsonDataTypesTests(JsonTestMixin, unittest.TestCase):
         self._test_json({})
         self._test_json({"a": 1, "b": "x", "c": None})
 
+    def test_naughty_dicts(self):
+        self._test_json({DT_NAME: 1, DT_DATA: 2})
+        self._test_json({DT_NAME: "__date__", DT_DATA: 2})
+        self._test_json({DT_NAME: "__datetime__", DT_DATA: 2})
+
     def test_invalid(self):
         self.assertRaises(TypeError, self._test_json, object())
 
