@@ -12,6 +12,7 @@ import datetime
 import json
 import unittest
 import pytz
+import warnings
 from mock import patch, sentinel
 
 from dtjson import (dtjson_default, dtjson_object_hook, DT_DATA, DT_NAME,
@@ -20,9 +21,18 @@ from dtjson import (dtjson_default, dtjson_object_hook, DT_DATA, DT_NAME,
 
 class JsonTestMixin(object):  # pylint: disable=too-few-public-methods
     def _test_json(self, obj):
-        self.assertEqual(obj, json.loads(json.dumps(obj,
-                                                    default=dtjson_default),
-                                         object_hook=dtjson_object_hook))
+        self.assertEqual(obj, self._encode_decode(obj))
+
+    def _test_json_datetime(self, obj):
+        decoded = self._encode_decode(obj)
+        self.assertEqual(obj, decoded)
+        self.assertEqual(obj.tzinfo, decoded.tzinfo)
+
+    @staticmethod
+    def _encode_decode(obj):
+        return json.loads(json.dumps(obj,
+                                     default=dtjson_default),
+                          object_hook=dtjson_object_hook)
 
 
 class DateTests(JsonTestMixin, unittest.TestCase):
@@ -35,20 +45,21 @@ class DatetimeTests(JsonTestMixin, unittest.TestCase):
         self.datetime = datetime.datetime(2015, 1, 2, 3, 4, 5)
 
     def test_naive(self):
-        self._test_json(self.datetime)
+        self._test_json_datetime(self.datetime)
 
     def test_utc(self):
-        self._test_json(pytz.utc.localize(self.datetime))
+        self._test_json_datetime(pytz.utc.localize(self.datetime))
 
     def test_timezone(self):
         timezone = pytz.timezone("America/Buenos_Aires")
-        self._test_json(timezone.localize(self.datetime))
+        self._test_json_datetime(timezone.localize(self.datetime))
 
     def test_naive_microseconds(self):
-        self._test_json(self.datetime + datetime.timedelta(microseconds=12345))
+        self._test_json_datetime(
+            self.datetime + datetime.timedelta(microseconds=12345))
 
     def test_aware_microseconds(self):
-        self._test_json(pytz.utc.localize(
+        self._test_json_datetime(pytz.utc.localize(
             self.datetime + datetime.timedelta(microseconds=12345)))
 
 
@@ -105,6 +116,33 @@ class EncodingTest(unittest.TestCase):
             mock_loads.assert_called_once_with(sentinel.object,
                                                object_hook=dtjson_object_hook)
             self.assertEqual(decoded, sentinel.decoded)
+
+
+class InvalidTimezonesTest(JsonTestMixin, unittest.TestCase):
+    def setUp(self):
+        timezone = pytz.timezone("America/Buenos_Aires")
+        self.datetime = timezone.localize(datetime.datetime(2015, 1, 2, 3, 4,
+                                                            5, 6))
+
+    def _test_is_moved_to_utc(self, dtime):
+        decoded = self._encode_decode(dtime)
+        self.assertEqual(dtime, decoded)
+        self.assertEqual(pytz.utc, decoded.tzinfo)
+
+    def test_missing_zone_name(self):
+        self.datetime.tzinfo.zone = None
+        with warnings.catch_warnings(record=True) as warns:
+            self._test_is_moved_to_utc(self.datetime)
+
+            self.assertIn("has no timezone name", str(warns[0].message))
+
+    def test_invalid_zone_name(self):
+        self.datetime.tzinfo.zone = "Clearly/InvalidTimezone"
+        with warnings.catch_warnings(record=True) as warns:
+            self._test_is_moved_to_utc(self.datetime)
+
+            self.assertIn("has an invalid timezone name",
+                          str(warns[0].message))
 
 
 if __name__ == '__main__':

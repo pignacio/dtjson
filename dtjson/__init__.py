@@ -6,6 +6,7 @@ import datetime
 import json
 import logging
 import pytz
+import warnings
 
 __author__ = 'Ignacio Rossi'
 __email__ = 'rossi.ignacio@gmail.com '
@@ -18,6 +19,11 @@ DT_DATA = '__dtjson_data__'
 
 Serializer = collections.namedtuple('Serializer', ['clz', 'name', 'from_json',
                                                    'to_json'])
+
+
+def _warn_missing_tz(tzinfo, message):
+    warnings.warn("The tzinfo {!r} {}. Storing as UTC.".format(tzinfo,
+                                                               message))
 
 
 def _date_to_json(date):
@@ -33,14 +39,22 @@ def _datetime_to_json(dtime):
         return [date.year, date.month, date.day, date.hour, date.minute,
                 date.second, date.microsecond]
 
-    if dtime.tzinfo:
-        if dtime.tzinfo.__class__.__name__ == 'FixedOffsetTimezone':
+    if dtime.utcoffset() is not None:
+        # Aware
+        timezone = dtime.tzinfo.zone
+        if timezone is None:
+            _warn_missing_tz(dtime.tzinfo, "has no timezone name")
             timezone = pytz.utc.zone
-        else:
-            timezone = dtime.tzinfo.zone
+        elif timezone not in pytz.all_timezones_set:
+            _warn_missing_tz(
+                dtime.tzinfo,
+                "has an invalid timezone name: '{}'".format(timezone))
+            timezone = pytz.utc.zone
+
         as_utc = pytz.utc.normalize(dtime)
         utc_values = _dt_values(as_utc)
     else:
+        # Naive
         timezone = None
         utc_values = _dt_values(dtime)
     return {'timezone': timezone, 'utc_values': utc_values, }
