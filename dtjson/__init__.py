@@ -22,8 +22,8 @@ Serializer = collections.namedtuple('Serializer', ['clz', 'name', 'from_json',
 
 
 def _warn_missing_tz(tzinfo, message):
-    warnings.warn("The tzinfo {!r} {}. Storing as UTC.".format(tzinfo,
-                                                               message))
+    warnings.warn("The tzinfo {!r} {}. Encoding with UTC timezone.".format(
+        tzinfo, message))
 
 
 def _date_to_json(date):
